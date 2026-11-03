@@ -62,12 +62,9 @@ int main(void)
 	uint32_t prev_button_press_time = -1;
 	uint32_t prev_led_toggle_time = -1;
 
-	int the_last_countdown = 10;
-
-	SensorData sensors = { 0 };
+	SensorData sensorData = { 0 };
 
 	bool double_press_flag = false;
-	bool terminated = false;
 
 	enterStandbyMode();
 
@@ -78,7 +75,10 @@ int main(void)
 		if (runtime == prev_runtime) continue;
 
 		// Update sensor data
-		updateSensorData(&sensors, runtime);
+		if (runtime % 1000 == 0) {
+			updateSensorData();
+			sensorData = getSensorData();
+		}
 
 		// Update double_press_flag
 		if (button_pressed_flag) double_press_flag = computeDoublePress(runtime, &prev_button_press_time);
@@ -94,7 +94,7 @@ int main(void)
 					break;
 
 				case BATTLE_MODE:
-					if (sensors.accel.warning) enterTheLast();
+					if (sensorData.accel.warning) enterTheLast();
 					break;
 
 				case THE_LAST:
@@ -115,7 +115,7 @@ int main(void)
 		if (runtime % 1000 == 0) {
 			switch(getOperatingMode()) {
 				case STANDBY_MODE:
-					transmitTelemetry(sensors, runtime);
+					transmitTelemetry();
 					break;
 
 				case BATTLE_MODE:
@@ -123,8 +123,7 @@ int main(void)
 
 				case THE_LAST:
 					transmitRescueRequest();
-					terminated = getTerminated();
-					if (terminated) enterTerminated();
+					if (getTerminated()) enterTerminated();
 					decrementCountdown();
 					break;
 

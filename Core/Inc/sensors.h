@@ -5,7 +5,8 @@
 
 #include "sensorData.h"
 
-void updateSensorData(SensorData *sensors, uint32_t runtime);
-void transmitTelemetry(SensorData sensors, uint32_t runtime);
+SensorData getSensorData(void);
+void updateSensorData(void);
+void transmitTelemetry(void);
 
 #endif
