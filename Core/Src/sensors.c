@@ -9,12 +9,18 @@
 
 extern UART_HandleTypeDef huart1;
 
+static SensorData sensorData = { 0 };
+
 static const float TEMP_UPPER_BOUND = 35.0;
 static const float PRESSURE_UPPER_BOUND = 1500.0;
 static const float HUMIDITY_UPPER_BOUND = 75.0;
 static const float ACCEL_LOWER_BOUND = -9.0;
 static const float GYRO_UPPER_BOUND = 30.0;
 static const float MAGNETO_UPPER_BOUND = 1.0;
+
+SensorData getSensorData(void) {
+	return sensorData;
+}
 
 static float readTemp(void) {
 	float temp_data;
@@ -74,100 +80,94 @@ static float readMagneto(void) {
 	return magneto_magnitude;
 }
 
-void updateSensorData(SensorData *sensors, uint32_t runtime) {
-
-	if (runtime % 1000 != 0) return;
+void updateSensorData(void) {
 
 	// Temp
-	sensors->temp.reading = readTemp();
-	sensors->temp.warning = (sensors->temp.reading > TEMP_UPPER_BOUND);
+	sensorData.temp.reading = readTemp();
+	sensorData.temp.warning = (sensorData.temp.reading > TEMP_UPPER_BOUND);
 
 	// Pressure
-	sensors->pressure.reading = readPressure();
-	sensors->pressure.warning = (sensors->pressure.reading > PRESSURE_UPPER_BOUND);
+	sensorData.pressure.reading = readPressure();
+	sensorData.pressure.warning = (sensorData.pressure.reading > PRESSURE_UPPER_BOUND);
 
 	// Humidity
-	sensors->humidity.reading = readHumidity();
-	sensors->humidity.warning = (sensors->humidity.reading > HUMIDITY_UPPER_BOUND);
+	sensorData.humidity.reading = readHumidity();
+	sensorData.humidity.warning = (sensorData.humidity.reading > HUMIDITY_UPPER_BOUND);
 
 	// Accel
-	sensors->accel.reading = readAccel();
-	sensors->accel.warning = (sensors->accel.reading < ACCEL_LOWER_BOUND);
-
+	sensorData.accel.reading = readAccel();
+	sensorData.accel.warning = (sensorData.accel.reading < ACCEL_LOWER_BOUND);
 
 	// Gyro
-	sensors->gyro.reading = readGyro();
-	sensors->gyro.warning = (sensors->gyro.reading > GYRO_UPPER_BOUND);
+	sensorData.gyro.reading = readGyro();
+	sensorData.gyro.warning = (sensorData.gyro.reading > GYRO_UPPER_BOUND);
 
 	// Magneto
-	sensors->magneto.reading = readMagneto();
-	sensors->magneto.warning = (sensors->magneto.reading > MAGNETO_UPPER_BOUND);
+	sensorData.magneto.reading = readMagneto();
+	sensorData.magneto.warning = (sensorData.magneto.reading > MAGNETO_UPPER_BOUND);
 
 }
 
-void transmitTelemetry(SensorData sensors, uint32_t runtime) {
-
-	if (runtime % 1000 != 0) return;
-
+void transmitTelemetry(void) {
 	char message_transmit[128];
 
-	if (sensors.temp.warning) {
-		sprintf(message_transmit, "T: %.2f degC, exceeds threshold of %.2f degC\r\n", sensors.temp.reading, TEMP_UPPER_BOUND);
+	if (sensorData.temp.warning) {
+		sprintf(message_transmit, "T: %.2f degC, above threshold of %.2f degC\r\n", sensorData.temp.reading, TEMP_UPPER_BOUND);
 		HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit),0xFFFF);
 	}
 
-	if (sensors.pressure.warning) {
-		sprintf(message_transmit, "P: %.2f hPa, exceeds threshold of %.2f hPa\r\n", sensors.pressure.reading, PRESSURE_UPPER_BOUND);
+	if (sensorData.pressure.warning) {
+		sprintf(message_transmit, "P: %.2f hPa, above threshold of %.2f hPa\r\n", sensorData.pressure.reading, PRESSURE_UPPER_BOUND);
 		HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit), 0xFFFF);
 	}
 
-	if (sensors.humidity.warning) {
-		sprintf(message_transmit, "H: %.2f %%rH, exceeds threshold of %.2f %%rH\r\n", sensors.humidity.reading, HUMIDITY_UPPER_BOUND);
+	if (sensorData.humidity.warning) {
+		sprintf(message_transmit, "H: %.2f %%rH, above threshold of %.2f %%rH\r\n", sensorData.humidity.reading, HUMIDITY_UPPER_BOUND);
 		HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit), 0xFFFF);
 	}
 
-	if (sensors.accel.warning) {
-		sprintf(message_transmit, "A: %.2f m/s^2, exceeds threshold of %.2f m/s^2\r\n", sensors.accel.reading, ACCEL_LOWER_BOUND);
+	if (sensorData.accel.warning) {
+		sprintf(message_transmit, "A: %.2f m/s^2, below threshold of %.2f m/s^2\r\n", sensorData.accel.reading, ACCEL_LOWER_BOUND);
 		HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit),0xFFFF);
 	}
 
-	if (sensors.gyro.warning) {
-		sprintf(message_transmit, "G: %.2f deg/s, exceeds threshold of %.2f deg/s\r\n", sensors.gyro.reading, GYRO_UPPER_BOUND);
+	if (sensorData.gyro.warning) {
+		sprintf(message_transmit, "G: %.2f deg/s, above threshold of %.2f deg/s\r\n", sensorData.gyro.reading, GYRO_UPPER_BOUND);
 		HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit),0xFFFF);
 	}
 
-	if (sensors.magneto.warning) {
-		sprintf(message_transmit, "M: %.2f G, exceeds threshold of %.2f G\r\n", sensors.magneto.reading, MAGNETO_UPPER_BOUND);
+	if (sensorData.magneto.warning) {
+		sprintf(message_transmit, "M: %.2f G, exceeds above of %.2f G\r\n", sensorData.magneto.reading, MAGNETO_UPPER_BOUND);
 		HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit),0xFFFF);
 	}
 
 	bool noWarnings = !(
-		sensors.temp.warning ||
-		sensors.pressure.warning ||
-		sensors.humidity.warning ||
-		sensors.accel.warning ||
-		sensors.gyro.warning ||
-		sensors.magneto.warning
+		sensorData.temp.warning ||
+		sensorData.pressure.warning ||
+		sensorData.humidity.warning ||
+		sensorData.accel.warning ||
+		sensorData.gyro.warning ||
+		sensorData.magneto.warning
 	);
 
 	if (noWarnings) {
 
-		sprintf(message_transmit, "T: %.2f degC, ", sensors.temp.reading);
+		sprintf(message_transmit, "T: %.2f degC, ", sensorData.temp.reading);
 		HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit),0xFFFF);
 
-		sprintf(message_transmit, "P: %.2f hPa, ", sensors.pressure.reading);
+		sprintf(message_transmit, "P: %.2f hPa, ", sensorData.pressure.reading);
 		HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit), 0xFFFF);
 
-		sprintf(message_transmit, "H: %.2f %%rH, ", sensors.humidity.reading);
+		sprintf(message_transmit, "H: %.2f %%rH, ", sensorData.humidity.reading);
 		HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit), 0xFFFF);
 
-		sprintf(message_transmit, "A: %.2f m/s^2, ", sensors.accel.reading);
+		sprintf(message_transmit, "A: %.2f m/s^2, ", sensorData.accel.reading);
 		HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit),0xFFFF);
 
-		sprintf(message_transmit, "G: %.2f deg/s, ", sensors.gyro.reading);
+		sprintf(message_transmit, "G: %.2f deg/s, ", sensorData.gyro.reading);
 		HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit),0xFFFF);
 
-		sprintf(message_transmit, "M: %.2f G\r\n", sensors.magneto.reading);
+		sprintf(message_transmit, "M: %.2f G\r\n", sensorData.magneto.reading);
 		HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit),0xFFFF);
 
 	}
