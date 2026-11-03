@@ -9,9 +9,11 @@ typedef enum {
 	DEFAULT_MODE
 } OperatingMode;
 
-void enterStandbyMode(OperatingMode *operatingMode);
-void enterBattleMode(OperatingMode *operatingMode);
-void enterTheLast(OperatingMode *operatingMode);
-void enterTerminated(OperatingMode *operatingMode);
+OperatingMode getOperatingMode(void);
+
+void enterBattleMode(void);
+void enterStandbyMode(void);
+void enterTerminated(void);
+void enterTheLast(void);
 
 #endif
