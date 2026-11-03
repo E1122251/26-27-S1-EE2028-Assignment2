@@ -69,11 +69,9 @@ int main(void)
 	bool double_press_flag = false;
 	bool terminated = false;
 
-	OperatingMode operating_mode = DEFAULT_MODE;
+	enterStandbyMode();
 
 	while (1) {
-
-		if (operating_mode == DEFAULT_MODE) enterStandbyMode(&operating_mode);
 
 		// Update runtime, skip if loop has already been run for this tick
 		runtime = HAL_GetTick();
@@ -90,18 +88,18 @@ int main(void)
 
 		// Mode switching
 		if (runtime % 1000 == 0) {
-			switch(operating_mode) {
+			switch(getOperatingMode()) {
 				case STANDBY_MODE:
-					if (double_press_flag) enterBattleMode(&operating_mode);
+					if (double_press_flag) enterBattleMode();
 					break;
 
 				case BATTLE_MODE:
-					if (sensors.accel.warning) enterTheLast(&operating_mode);
+					if (sensors.accel.warning) enterTheLast();
 					break;
 
 				case THE_LAST:
 					if (double_press_flag) {
-						enterStandbyMode(&operating_mode);
+						enterStandbyMode();
 						resetCountdown();
 					}
 					break;
@@ -115,7 +113,7 @@ int main(void)
 
 		// Mode handling
 		if (runtime % 1000 == 0) {
-			switch(operating_mode) {
+			switch(getOperatingMode()) {
 				case STANDBY_MODE:
 					transmitTelemetry(sensors, runtime);
 					break;
@@ -126,7 +124,7 @@ int main(void)
 				case THE_LAST:
 					transmitRescueRequest();
 					terminated = getTerminated();
-					if (terminated) enterTerminated(&operating_mode);
+					if (terminated) enterTerminated();
 					decrementCountdown();
 					break;
 
