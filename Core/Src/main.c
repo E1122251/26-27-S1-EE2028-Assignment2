@@ -46,6 +46,52 @@ bool computeDoublePress(uint32_t runtime, uint32_t *prev_button_press_time) {
 	return false;
 }
 
+// ========== Handle mode ==========
+void handleModeSwitch(bool double_press_flag, SensorData sensor_data) {
+	switch(getOperatingMode()) {
+		case STANDBY_MODE:
+			if (double_press_flag) enterBattleMode();
+			break;
+
+		case BATTLE_MODE:
+			if (sensor_data.accel.warning) enterTheLast();
+			break;
+
+		case THE_LAST:
+			if (double_press_flag) {
+				enterStandbyMode();
+				resetCountdown();
+			}
+			break;
+
+		case TERMINATED:
+			break;
+	}
+}
+
+void handleModeActions(void) {
+	switch(getOperatingMode()) {
+		case STANDBY_MODE:
+			transmitTelemetry();
+			break;
+
+		case BATTLE_MODE:
+			break;
+
+		case THE_LAST:
+			transmitRescueRequest();
+			if (getTerminated()) enterTerminated();
+			decrementCountdown();
+			break;
+
+		case TERMINATED:
+			while (1) {}
+			break;
+	}
+}
+
+// ========== Main loop ==========
+
 int main(void)
 {
 
@@ -62,7 +108,7 @@ int main(void)
 	uint32_t prev_button_press_time = -1;
 	uint32_t prev_led_toggle_time = -1;
 
-	SensorData sensorData = { 0 };
+	SensorData sensor_data = { 0 };
 
 	bool double_press_flag = false;
 
@@ -74,62 +120,24 @@ int main(void)
 		runtime = HAL_GetTick();
 		if (runtime == prev_runtime) continue;
 
-		// Update sensor data
-		if (runtime % 1000 == 0) {
-			updateSensorData();
-			sensorData = getSensorData();
-		}
-
 		// Update double_press_flag
 		if (button_pressed_flag) double_press_flag = computeDoublePress(runtime, &prev_button_press_time);
 
-		// Update LED
-		updateLed(runtime);
-
-		// Mode switching
-		if (runtime % 1000 == 0) {
-			switch(getOperatingMode()) {
-				case STANDBY_MODE:
-					if (double_press_flag) enterBattleMode();
-					break;
-
-				case BATTLE_MODE:
-					if (sensorData.accel.warning) enterTheLast();
-					break;
-
-				case THE_LAST:
-					if (double_press_flag) {
-						enterStandbyMode();
-						resetCountdown();
-					}
-					break;
-
-				case TERMINATED:
-					break;
-			}
-
-			double_press_flag = false;
+		// 4 Hz
+		if (runtime % 250 == 0) {
+			updateLed(runtime);
 		}
 
-		// Mode handling
+		// 1 Hz
 		if (runtime % 1000 == 0) {
-			switch(getOperatingMode()) {
-				case STANDBY_MODE:
-					transmitTelemetry();
-					break;
+			// Update sensorData
+			updateSensorData();
+			sensor_data = getSensorData();
 
-				case BATTLE_MODE:
-					break;
+			handleModeSwitch(double_press_flag, sensor_data);
+			double_press_flag = false;
 
-				case THE_LAST:
-					transmitRescueRequest();
-					if (getTerminated()) enterTerminated();
-					decrementCountdown();
-					break;
-
-				case TERMINATED:
-					while (1) {}
-			}
+			handleModeActions();
 		}
 
 		// Update prev_runtime
