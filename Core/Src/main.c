@@ -1,7 +1,7 @@
 /******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  * (c) EE2028 Teaching Team
+- @file           : main.c
+- @brief          : Main program body
+- (c) EE2028 Teaching Team
   ******************************************************************************/
 
 
