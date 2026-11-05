@@ -1,7 +1,7 @@
 /******************************************************************************
-- @file           : main.c
-- @brief          : Main program body
-- (c) EE2028 Teaching Team
+  * @file           : main.c
+  * @brief          : Main program body
+  * (c) EE2028 Teaching Team
   ******************************************************************************/
 
 
@@ -20,7 +20,6 @@ UART_HandleTypeDef huart1;
 static const uint32_t DOUBLE_PRESS_INTERVAL = 500;
 
 // ========== Push button ==========
-
 static volatile bool button_pressed_flag = false;
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
@@ -58,7 +57,7 @@ void handleModeSwitch(bool double_press_flag, SensorData sensor_data) {
 			break;
 
 		case BATTLE_MODE:
-			if (BattleMode_Update(HAL_GetTick())) {
+			if (sensor_data.accel.warning) {
 				enterTheLast();
 			}
 			break;
