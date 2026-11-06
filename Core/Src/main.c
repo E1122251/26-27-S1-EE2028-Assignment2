@@ -13,13 +13,13 @@
 #include "customInit.h"
 #include "sensors.h"
 #include "operatingMode.h"
+#include "battle_mode.h"
 
 UART_HandleTypeDef huart1;
 
 static const uint32_t DOUBLE_PRESS_INTERVAL = 500;
 
 // ========== Push button ==========
-
 static volatile bool button_pressed_flag = false;
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
@@ -50,11 +50,16 @@ bool computeDoublePress(uint32_t runtime, uint32_t *prev_button_press_time) {
 void handleModeSwitch(bool double_press_flag, SensorData sensor_data) {
 	switch(getOperatingMode()) {
 		case STANDBY_MODE:
-			if (double_press_flag) enterBattleMode();
+			if (double_press_flag) {
+				enterBattleMode();
+				BattleMode_Init();
+			}
 			break;
 
 		case BATTLE_MODE:
-			if (sensor_data.accel.warning) enterTheLast();
+			if (sensor_data.accel.warning) {
+				enterTheLast();
+			}
 			break;
 
 		case THE_LAST:
@@ -121,7 +126,13 @@ int main(void)
 		if (runtime == prev_runtime) continue;
 
 		// Update double_press_flag
-		if (button_pressed_flag) double_press_flag = computeDoublePress(runtime, &prev_button_press_time);
+		if (button_pressed_flag) {
+			double_press_flag = computeDoublePress(runtime, &prev_button_press_time);
+
+			if (!double_press_flag && getOperatingMode() == BATTLE_MODE) {
+				BattleMode_OnSinglePress();
+			}
+		}
 
 		// 4 Hz
 		if (runtime % 250 == 0) {
