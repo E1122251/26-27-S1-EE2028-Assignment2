@@ -12,7 +12,7 @@
 #include <stdbool.h>
 
 void BattleMode_Init(void);
-bool BattleMode_Update(uint32_t current_time);
 void BattleMode_OnSinglePress(void);
+bool BattleMode_Update(void);
 
 #endif /* BATTLE_MODE_H */
