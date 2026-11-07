@@ -14,8 +14,10 @@
 #include "sensors.h"
 
 #include "modeSwitch.h"
+#include "modeStandby.h"
 #include "modeBattle.h"
 #include "modeLast.h"
+#include "modeTerminated.h"
 
 UART_HandleTypeDef huart1;
 
@@ -65,7 +67,9 @@ void handleModeSwitch(bool double_press_flag, SensorData sensor_data) {
 			break;
 
 		case THE_LAST:
-			if (double_press_flag) {
+			if (MT_getTerminated()) {
+				M_enterTerminated();
+			} else if (double_press_flag) {
 				M_enterStandbyMode();
 				ML_resetCountdown();
 			}
@@ -76,10 +80,10 @@ void handleModeSwitch(bool double_press_flag, SensorData sensor_data) {
 	}
 }
 
-void handleModeActions(void) {
+void handleModeActions(SensorData sensorData) {
 	switch(M_getOperatingMode()) {
 		case STANDBY_MODE:
-			transmitTelemetry();
+			MS_transmitTelemetry(sensorData);
 			break;
 
 		case BATTLE_MODE:
@@ -87,8 +91,8 @@ void handleModeActions(void) {
 			break;
 
 		case THE_LAST:
+			if (ML_getCountdown() == 0) MT_setTerminated();
 			ML_transmitRescueRequest();
-			if (ML_getTerminated()) M_enterTerminated();
 			ML_decrementCountdown();
 			break;
 
@@ -116,7 +120,7 @@ int main(void)
 	uint32_t prev_button_press_time = -1;
 	uint32_t prev_led_toggle_time = -1;
 
-	SensorData sensor_data = { 0 };
+	SensorData sensorData = { 0 };
 
 	bool double_press_flag = false;
 
@@ -146,12 +150,12 @@ int main(void)
 		if (runtime % 1000 == 0) {
 			// Update sensorData
 			updateSensorData();
-			sensor_data = getSensorData();
+			sensorData = getSensorData();
 
-			handleModeSwitch(double_press_flag, sensor_data);
+			handleModeSwitch(double_press_flag, sensorData);
 			double_press_flag = false;
 
-			handleModeActions();
+			handleModeActions(sensorData);
 		}
 
 		// Update prev_runtime
