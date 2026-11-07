@@ -12,8 +12,10 @@
 
 #include "customInit.h"
 #include "sensors.h"
-#include "operatingMode.h"
-#include "battle_mode.h"
+
+#include "modeSwitch.h"
+#include "modeBattle.h"
+#include "modeLast.h"
 
 UART_HandleTypeDef huart1;
 
@@ -48,24 +50,24 @@ bool computeDoublePress(uint32_t runtime, uint32_t *prev_button_press_time) {
 
 // ========== Handle mode ==========
 void handleModeSwitch(bool double_press_flag, SensorData sensor_data) {
-	switch(getOperatingMode()) {
+	switch(M_getOperatingMode()) {
 		case STANDBY_MODE:
 			if (double_press_flag) {
-				enterBattleMode();
-				BattleMode_Init();
+				M_enterBattleMode();
+				MB_Init();
 			}
 			break;
 
 		case BATTLE_MODE:
 			if (sensor_data.accel.warning) {
-				enterTheLast();
+				M_enterTheLast();
 			}
 			break;
 
 		case THE_LAST:
 			if (double_press_flag) {
-				enterStandbyMode();
-				resetCountdown();
+				M_enterStandbyMode();
+				ML_resetCountdown();
 			}
 			break;
 
@@ -75,18 +77,19 @@ void handleModeSwitch(bool double_press_flag, SensorData sensor_data) {
 }
 
 void handleModeActions(void) {
-	switch(getOperatingMode()) {
+	switch(M_getOperatingMode()) {
 		case STANDBY_MODE:
 			transmitTelemetry();
 			break;
 
 		case BATTLE_MODE:
+			MB_Update();
 			break;
 
 		case THE_LAST:
-			transmitRescueRequest();
-			if (getTerminated()) enterTerminated();
-			decrementCountdown();
+			ML_transmitRescueRequest();
+			if (ML_getTerminated()) M_enterTerminated();
+			ML_decrementCountdown();
 			break;
 
 		case TERMINATED:
@@ -117,7 +120,7 @@ int main(void)
 
 	bool double_press_flag = false;
 
-	enterStandbyMode();
+	M_enterStandbyMode();
 
 	while (1) {
 
@@ -129,8 +132,8 @@ int main(void)
 		if (button_pressed_flag) {
 			double_press_flag = computeDoublePress(runtime, &prev_button_press_time);
 
-			if (!double_press_flag && getOperatingMode() == BATTLE_MODE) {
-				BattleMode_OnSinglePress();
+			if (!double_press_flag && M_getOperatingMode() == BATTLE_MODE) {
+				MB_OnSinglePress();
 			}
 		}
 
