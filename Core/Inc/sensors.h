@@ -7,6 +7,5 @@
 
 SensorData getSensorData(void);
 void updateSensorData(void);
-void transmitTelemetry(void);
 
 #endif

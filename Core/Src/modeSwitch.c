@@ -34,7 +34,7 @@ static void M_enterOperatingMode(OperatingMode mode) {
 		case TERMINATED:
 			setLedMode(LED_ALWAYS_OFF);
 
-			message_transmit = "Executing termination sequence. Goodbye cruel world.\r\n";
+			message_transmit = "Termination sequence complete. Goodbye cruel world.\r\n";
 			break;
 
 		case THE_LAST:
