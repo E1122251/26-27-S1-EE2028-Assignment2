@@ -63,6 +63,8 @@ void handleModeSwitch(bool double_press_flag, SensorData sensor_data) {
 		case BATTLE_MODE:
 			if (sensor_data.accel.warning) {
 				M_enterTheLast();
+			} else if (double_press_flag) {
+				M_enterStandbyMode();
 			}
 			break;
 
@@ -70,8 +72,8 @@ void handleModeSwitch(bool double_press_flag, SensorData sensor_data) {
 			if (MT_getTerminated()) {
 				M_enterTerminated();
 			} else if (double_press_flag) {
-				M_enterStandbyMode();
 				ML_resetCountdown();
+				M_enterBattleMode();
 			}
 			break;
 
