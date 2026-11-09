@@ -9,9 +9,11 @@
 #include "main.h"
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "customInit.h"
 #include "sensors.h"
+#include "button.h"
 
 #include "modeSwitch.h"
 #include "modeStandby.h"
@@ -20,35 +22,6 @@
 #include "modeTerminated.h"
 
 UART_HandleTypeDef huart1;
-
-static const uint32_t DOUBLE_PRESS_INTERVAL = 500;
-
-// ========== Push button ==========
-static volatile bool button_pressed_flag = false;
-
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-
-	if (GPIO_Pin == BUTTON_EXTI13_Pin) {
-		button_pressed_flag = true;
-	}
-}
-
-bool computeDoublePress(uint32_t runtime, uint32_t *prev_button_press_time) {
-	if (*prev_button_press_time == -1){
-		*prev_button_press_time = runtime;
-		return false;
-	}
-
-	uint32_t interval = runtime - *prev_button_press_time;
-
-	if (interval <= DOUBLE_PRESS_INTERVAL) {
-		*prev_button_press_time = -1;
-		return true;
-	}
-
-	*prev_button_press_time = runtime;
-	return false;
-}
 
 // ========== Handle mode ==========
 void handleModeSwitch(bool double_press_flag, SensorData sensor_data) {
@@ -119,12 +92,7 @@ int main(void)
 	uint32_t runtime = -1;
 	uint32_t prev_runtime = -1;
 
-	uint32_t prev_button_press_time = -1;
-	uint32_t prev_led_toggle_time = -1;
-
 	SensorData sensorData = { 0 };
-
-	bool double_press_flag = false;
 
 	M_enterStandbyMode();
 
@@ -134,14 +102,8 @@ int main(void)
 		runtime = HAL_GetTick();
 		if (runtime == prev_runtime) continue;
 
-		// Update double_press_flag
-		if (button_pressed_flag) {
-			double_press_flag = computeDoublePress(runtime, &prev_button_press_time);
-
-			if (!double_press_flag && M_getOperatingMode() == BATTLE_MODE) {
-				MB_OnSinglePress();
-			}
-		}
+		// Update button flags
+		B_update(runtime);
 
 		// 4 Hz
 		if (runtime % 250 == 0) {
@@ -154,17 +116,24 @@ int main(void)
 			updateSensorData();
 			sensorData = getSensorData();
 
-			handleModeSwitch(double_press_flag, sensorData);
-			double_press_flag = false;
+			handleModeSwitch(B_getDoublePressFlag(), sensorData);
+			B_consumeDoublePressFlag();
+		}
 
+		// 2 Hz
+		if (runtime % 500 == 0) {
+			if (B_getSinglePressFlag()) {
+				MB_OnSinglePress();
+				B_consumeSinglePressFlag();
+			}
+		}
+
+		if (runtime % 1000 == 0) {
 			handleModeActions(sensorData);
 		}
 
 		// Update prev_runtime
 		prev_runtime = runtime;
-
-		// Clear button_pressed_flag;
-		button_pressed_flag = false;
 
 	}
 }
