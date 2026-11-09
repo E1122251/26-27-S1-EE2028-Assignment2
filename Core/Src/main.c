@@ -53,9 +53,27 @@ void handleModeSwitch(bool double_press_flag, SensorData sensor_data) {
 		case TERMINATED:
 			break;
 	}
+
+	B_consumeDoublePressFlag();
 }
 
-void handleModeActions(SensorData sensorData) {
+void handleModeButtonActions(bool single_press_flag, uint32_t runtime) {
+	if (single_press_flag) {
+		switch (M_getOperatingMode()) {
+			case STANDBY_MODE:
+				MS_transmitLifetime(runtime);
+				break;
+
+			case BATTLE_MODE:
+				MB_OnSinglePress();
+				break;
+		}
+
+		B_consumeSinglePressFlag();
+	}
+}
+
+void handleModeRecurringActions(SensorData sensorData) {
 	switch(M_getOperatingMode()) {
 		case STANDBY_MODE:
 			MS_transmitTelemetry(sensorData);
@@ -82,15 +100,14 @@ void handleModeActions(SensorData sensorData) {
 int main(void)
 {
 
-	// Initialisation
-	HAL_Init();
-	MX_GPIO_Init();
-	UART1_Init();
-	initSensors();
-	initLed();
+	customInit();
 
 	uint32_t runtime = -1;
 	uint32_t prev_runtime = -1;
+
+	bool clock_1Hz = false;
+	bool clock_2Hz = false;
+	bool clock_4Hz = false;
 
 	SensorData sensorData = { 0 };
 
@@ -102,35 +119,24 @@ int main(void)
 		runtime = HAL_GetTick();
 		if (runtime == prev_runtime) continue;
 
+		// Update clock bools
+		clock_1Hz = (runtime % 1000 == 0);
+		clock_2Hz = (runtime % 500 == 0);
+		clock_4Hz = (runtime % 250 == 0);
+
 		// Update button flags
 		B_update(runtime);
 
-		// 4 Hz
-		if (runtime % 250 == 0) {
-			updateLed(runtime);
-		}
+		if (clock_4Hz) updateLed(runtime);
 
-		// 1 Hz
-		if (runtime % 1000 == 0) {
-			// Update sensorData
+		if (clock_1Hz) {
 			updateSensorData();
 			sensorData = getSensorData();
-
-			handleModeSwitch(B_getDoublePressFlag(), sensorData);
-			B_consumeDoublePressFlag();
 		}
 
-		// 2 Hz
-		if (runtime % 500 == 0) {
-			if (B_getSinglePressFlag()) {
-				MB_OnSinglePress();
-				B_consumeSinglePressFlag();
-			}
-		}
-
-		if (runtime % 1000 == 0) {
-			handleModeActions(sensorData);
-		}
+		if (clock_1Hz) handleModeSwitch(B_getDoublePressFlag(), sensorData);
+		if (clock_2Hz) handleModeButtonActions(B_getSinglePressFlag(), runtime);
+		if (clock_1Hz) handleModeRecurringActions(sensorData);
 
 		// Update prev_runtime
 		prev_runtime = runtime;

@@ -77,3 +77,11 @@ void MS_transmitTelemetry(SensorData sensorData) {
 
 	}
 }
+
+void MS_transmitLifetime(uint32_t runtime) {
+	int lifetime = runtime / 1000;
+	char message_transmit[128];
+
+	sprintf(message_transmit, "Drone has been active for %i seconds\r\n", lifetime);
+	HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit),0xFFFF);
+}
