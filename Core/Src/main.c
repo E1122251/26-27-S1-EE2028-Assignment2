@@ -127,8 +127,6 @@ int main(void)
 		// Update button flags
 		B_update(runtime);
 
-		if (clock_4Hz) updateLed(runtime);
-
 		if (clock_1Hz) {
 			updateSensorData();
 			sensorData = getSensorData();
@@ -137,6 +135,8 @@ int main(void)
 		if (clock_1Hz) handleModeSwitch(B_getDoublePressFlag(), sensorData);
 		if (clock_2Hz) handleModeButtonActions(B_getSinglePressFlag(), runtime);
 		if (clock_1Hz) handleModeRecurringActions(sensorData);
+
+		if (clock_4Hz) updateLed(runtime);
 
 		// Update prev_runtime
 		prev_runtime = runtime;

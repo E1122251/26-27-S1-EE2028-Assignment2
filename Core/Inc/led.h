@@ -9,7 +9,6 @@ typedef enum {
     LED_BLINK_1HZ,
     LED_BLINK_2HZ,
 	LED_DEFAULT
-
 } LedMode;
 
 void setLedMode (LedMode mode);
