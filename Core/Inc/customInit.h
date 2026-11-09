@@ -6,4 +6,6 @@ void UART1_Init(void);
 void initSensors(void);
 void initLed(void);
 
+void customInit(void);
+
 #endif
