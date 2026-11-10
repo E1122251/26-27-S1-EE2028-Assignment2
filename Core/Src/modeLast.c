@@ -19,6 +19,12 @@ void ML_transmitRescueRequest(void) {
 	}
 }
 
+void ML_transmitRescueAcknowledgement(void) {
+	char message_transmit[128];
+	sprintf(message_transmit, "Drone Was Rescued!\r\n", countdown);
+	HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit),0xFFFF);
+}
+
 int ML_getCountdown(void) {
 	return countdown;
 }

@@ -45,15 +45,24 @@ void MB_OnSinglePress(SensorData sensorData) {
 }
 
 void MB_Update(SensorData sensorData) {
-    if (lsr_e >= 5 && !sensorData.temp.warning) {
-        lsr_e -= 5;
-        char msg[140];
-        snprintf(msg, sizeof(msg), VT_B_GREEN ">>> Laser fired! (-5 energy, %d/10 left) [Temp: %.1f C] <<<\r\n" VT_RESET, lsr_e, sensorData.temp.reading);
-        HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), 0xFFFF);
-    }
+    if (sensorData.noWarnings) {
+    	if (lsr_e >= 5) {
+			lsr_e -= 5;
+			char msg[140];
+			snprintf(msg, sizeof(msg), VT_B_GREEN ">>> Laser fired! (-5 energy, %d/10 left) <<<\r\n" VT_RESET, lsr_e, sensorData.temp.reading);
+			HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), 0xFFFF);
+		} else {
+			if (drone_health > 0 && drone_health < 100) {
+				drone_health += 10;
+				if (drone_health > 100) {
+					drone_health = 100;
+				}
 
-	if (sensorData.accel.warning) {
-		drone_health -= 25;
+				Print_Health_Bar(drone_health, true);
+			}
+		}
+    } else if (sensorData.accel.warning) {
+    	drone_health -= 25;
 		if (drone_health < 0) {
 			drone_health = 0;
 		}
@@ -62,20 +71,44 @@ void MB_Update(SensorData sensorData) {
 
 		if (drone_health == 0) {
 			destroyed = true;
-			char term_msg[] = VT_BG_RED VT_WHITE VT_BOLD "[CRITICAL] Drone destroyed! Initiating failure sequence. " VT_RESET "\r\n";
+			char term_msg[] = VT_BG_RED VT_WHITE VT_BOLD "[CRITICAL] Drone destroyed! Initiating countdown. " VT_RESET "\r\n";
 			HAL_UART_Transmit(&huart1, (uint8_t*)term_msg, strlen(term_msg), 0xFFFF);
-			return true;
 		}
-	} else {
-		if (drone_health > 0 && drone_health < 100) {
-			drone_health += 10;
-			if (drone_health > 100) {
-				drone_health = 100;
-			}
+    } else {
+    	char msg[160];
 
-			Print_Health_Bar(drone_health, true);
+    	snprintf(msg, sizeof(msg),
+			VT_BG_RED VT_WHITE VT_BOLD "[WARNING]" VT_RESET " " VT_B_YELLOW "Drone malfunctioning! " VT_RESET);
+    	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), 0xFFFF);
+
+    	if (sensorData.temp.warning) {
+    		snprintf(msg, sizeof(msg), VT_B_YELLOW "T" VT_RESET);
+			HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), 0xFFFF);
+    	}
+
+    	if (sensorData.pressure.warning) {
+			snprintf(msg, sizeof(msg), VT_B_YELLOW "P" VT_RESET);
+			HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), 0xFFFF);
 		}
-	}
+
+    	if (sensorData.humidity.warning) {
+			snprintf(msg, sizeof(msg), VT_B_YELLOW "H" VT_RESET);
+			HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), 0xFFFF);
+		}
+
+    	if (sensorData.gyro.warning) {
+			snprintf(msg, sizeof(msg), VT_B_YELLOW "G" VT_RESET);
+			HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), 0xFFFF);
+		}
+
+    	if (sensorData.magneto.warning) {
+			snprintf(msg, sizeof(msg), VT_B_YELLOW "M" VT_RESET);
+			HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), 0xFFFF);
+		}
+
+    	snprintf(msg, sizeof(msg), "\r\n");
+    	HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), 0xFFFF);
+    }
 
 }
 

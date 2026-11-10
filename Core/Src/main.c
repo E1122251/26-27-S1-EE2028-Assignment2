@@ -44,6 +44,7 @@ void handleModeSwitch(bool double_press_flag, SensorData sensor_data) {
 			if (MT_getTerminated()) {
 				M_enterTerminated();
 			} else if (double_press_flag) {
+				ML_transmitRescueAcknowledgement();
 				M_enterBattleMode();
 			}
 			break;

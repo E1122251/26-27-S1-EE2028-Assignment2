@@ -104,4 +104,14 @@ void updateSensorData(void) {
 	sensorData.magneto.reading = readMagneto();
 	sensorData.magneto.warning = (sensorData.magneto.reading > MAGNETO_UPPER_BOUND);
 
+	// noWarnings
+	sensorData.noWarnings = !(
+		sensorData.temp.warning ||
+		sensorData.pressure.warning ||
+		sensorData.humidity.warning ||
+		sensorData.accel.warning ||
+		sensorData.gyro.warning ||
+		sensorData.magneto.warning
+	);
+
 }
