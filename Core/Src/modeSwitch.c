@@ -1,14 +1,12 @@
-#include <modeSwitch.h>
+#include "modeSwitch.h"
 #include <stdint.h>
 
-#include <stm32l4xx_hal.h>
+#include "transmit.h"
 
 #include "led.h"
 
 #include "modeBattle.h"
 #include "modeLast.h"
-
-extern UART_HandleTypeDef huart1;
 
 static OperatingMode operating_mode = DEFAULT_MODE;
 
@@ -25,26 +23,26 @@ static void M_enterOperatingMode(OperatingMode mode) {
 		case BATTLE_MODE:
 			setLedMode(LED_BLINK_1HZ);
 			message_transmit = "Entering BATTLE_MODE\r\n";
-			HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit),0xFFFF);
+			transmit(message_transmit);
 			MB_Init();
 			break;
 
 		case STANDBY_MODE:
 			setLedMode(LED_ALWAYS_ON);
 			message_transmit = "Entering STANDBY_MODE\r\n";
-			HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit),0xFFFF);
+			transmit(message_transmit);
 			break;
 
 		case TERMINATED:
 			setLedMode(LED_ALWAYS_OFF);
 			message_transmit = "Termination sequence complete. Goodbye cruel world.\r\n";
-			HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit),0xFFFF);
+			transmit(message_transmit);
 			break;
 
 		case THE_LAST:
 			setLedMode(LED_BLINK_2HZ);
 			message_transmit = "Entering THE_LAST\r\n";
-			HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit),0xFFFF);
+			transmit(message_transmit);
 			ML_resetCountdown();
 			break;
 	}
