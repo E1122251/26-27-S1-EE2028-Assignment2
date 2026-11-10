@@ -12,8 +12,10 @@
 #include <stdint.h>
 
 #include "customInit.h"
-#include "sensors.h"
+
 #include "button.h"
+#include "led.h"
+#include "sensors.h"
 
 #include "modeSwitch.h"
 #include "modeStandby.h"
@@ -51,6 +53,9 @@ void handleModeSwitch(bool double_press_flag, SensorData sensor_data) {
 
 		case TERMINATED:
 			break;
+
+		default:
+			break;
 	}
 
 	B_consumeDoublePressFlag();
@@ -65,6 +70,9 @@ void handleModeButtonActions(bool single_press_flag, uint32_t runtime, SensorDat
 
 			case BATTLE_MODE:
 				MB_OnSinglePress(sensorData);
+				break;
+
+			default:
 				break;
 		}
 
@@ -90,6 +98,9 @@ void handleModeRecurringActions(SensorData sensorData) {
 
 		case TERMINATED:
 			while (1) {}
+			break;
+
+		default:
 			break;
 	}
 }

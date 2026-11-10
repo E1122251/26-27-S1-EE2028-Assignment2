@@ -10,6 +10,6 @@ void B_update(uint32_t runtime);
 bool B_getSinglePressFlag(void);
 bool B_getDoublePressFlag(void);
 void B_consumeSinglePressFlag(void);
-void B_consumeSinglePressFlag(void);
+void B_consumeDoublePressFlag(void);
 
 #endif
