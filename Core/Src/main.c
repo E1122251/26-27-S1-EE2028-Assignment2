@@ -12,8 +12,10 @@
 #include <stdint.h>
 
 #include "customInit.h"
-#include "sensors.h"
+
 #include "button.h"
+#include "led.h"
+#include "sensors.h"
 
 #include "modeSwitch.h"
 #include "modeStandby.h"
