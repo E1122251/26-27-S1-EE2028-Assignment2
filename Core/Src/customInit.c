@@ -68,3 +68,11 @@ void initSensors(void) {
 void initLed(void) {
 	BSP_LED_Init(LED2);
 }
+
+void customInit(void) {
+	HAL_Init();
+	MX_GPIO_Init();
+	UART1_Init();
+	initSensors();
+	initLed();
+}

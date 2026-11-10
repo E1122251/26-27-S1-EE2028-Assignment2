@@ -42,7 +42,7 @@ void MS_transmitTelemetry(SensorData sensorData) {
 	}
 
 	if (sensorData.magneto.warning) {
-		sprintf(message_transmit, "M: %.2f G, exceeds above of %.2f G\r\n", sensorData.magneto.reading, MAGNETO_UPPER_BOUND);
+		sprintf(message_transmit, "M: %.2f G, above threshold of %.2f G\r\n", sensorData.magneto.reading, MAGNETO_UPPER_BOUND);
 		HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit),0xFFFF);
 	}
 
@@ -76,4 +76,12 @@ void MS_transmitTelemetry(SensorData sensorData) {
 		HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit),0xFFFF);
 
 	}
+}
+
+void MS_transmitLifetime(uint32_t runtime) {
+	int lifetime = runtime / 1000;
+	char message_transmit[128];
+
+	sprintf(message_transmit, "Drone has been active for %i seconds\r\n", lifetime);
+	HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit),0xFFFF);
 }

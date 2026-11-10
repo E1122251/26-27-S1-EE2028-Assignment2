@@ -1,10 +1,8 @@
 /*
-- modeBattle.h
+ * modeBattle.h
  *
--  Created on:
-Nov 4, 2026
--      Author: Aryan
-Goswami
+ *  Created on: Nov 4, 2026
+ *      Author: Aryan Goswami
  */
 
 #ifndef MODEBATTLE_H
