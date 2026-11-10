@@ -3,10 +3,10 @@
 
 #include <stm32l4xx_hal.h>
 
+#include "led.h"
+
 #include "modeBattle.h"
 #include "modeLast.h"
-
-#include "led.h"
 
 extern UART_HandleTypeDef huart1;
 
