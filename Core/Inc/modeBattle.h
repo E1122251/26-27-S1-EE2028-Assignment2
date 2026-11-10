@@ -27,8 +27,11 @@
 #define VT_B_CYAN    "\033[1;36m"
 #define VT_BG_RED    "\033[41m"
 
+#include "sensorData.h"
+
 void MB_Init(void);
-void MB_OnSinglePress(void);
-bool MB_Update(void);
+void MB_OnSinglePress(SensorData sensorData);
+void MB_Update(SensorData sensorData);
+bool MB_GetDestroyed(void);
 
 #endif /* MODEBATTLE_H */

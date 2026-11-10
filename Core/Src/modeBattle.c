@@ -1,8 +1,10 @@
 #include "modeBattle.h"
 #include "main.h"
-#include "sensors.h"
+#include "sensorData.h"
 #include "stdio.h"
 #include "string.h"
+
+#include <stdbool.h>
 
 #include "../../Drivers/BSP/B-L4S5I-IOT01/stm32l4s5i_iot01_accelero.h"
 
@@ -11,25 +13,22 @@ extern UART_HandleTypeDef huart1;
 static int lsr_e = 0;
 
 static int drone_health = 100;
-static uint32_t health_lst = 0;
+static bool destroyed = false;
 
-static bool Internal_Check_Upside_Down(void);
 static void Print_Health_Bar(int health, bool is_healing);
 
 void MB_Init(void) {
     lsr_e = 0;
     drone_health = 100;
-    health_lst = HAL_GetTick();
+    destroyed = false;
 
     char init_msg[] = VT_B_CYAN "=== Battle Mode Active ===" VT_RESET "\r\n"
                       VT_GREEN "Drone online | Hull: [##########] 100%" VT_RESET "\r\n";
     HAL_UART_Transmit(&huart1, (uint8_t*)init_msg, strlen(init_msg), 0xFFFF);
 }
 
-void MB_OnSinglePress(void) {
-    SensorData current_sensors = getSensorData();
-
-    if (current_sensors.temp.warning) {
+void MB_OnSinglePress(SensorData sensorData) {
+    if (sensorData.temp.warning) {
         char warn[] = VT_BG_RED VT_WHITE VT_BOLD "[OVERHEAT] High temp detected! Charging locked out." VT_RESET "\r\n";
         HAL_UART_Transmit(&huart1, (uint8_t*)warn, strlen(warn), 0xFFFF);
         return;
@@ -45,59 +44,43 @@ void MB_OnSinglePress(void) {
     HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), 0xFFFF);
 }
 
-bool MB_Update(void) {
-    uint32_t current_time = HAL_GetTick();
-    SensorData current_sensors = getSensorData();
-
-    if (lsr_e >= 5 && !current_sensors.temp.warning) {
+void MB_Update(SensorData sensorData) {
+    if (lsr_e >= 5 && !sensorData.temp.warning) {
         lsr_e -= 5;
         char msg[140];
-        snprintf(msg, sizeof(msg), VT_B_GREEN ">>> Laser fired! (-5 energy, %d/10 left) [Temp: %.1f C] <<<\r\n" VT_RESET, lsr_e, current_sensors.temp.reading);
+        snprintf(msg, sizeof(msg), VT_B_GREEN ">>> Laser fired! (-5 energy, %d/10 left) [Temp: %.1f C] <<<\r\n" VT_RESET, lsr_e, sensorData.temp.reading);
         HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), 0xFFFF);
     }
 
-    if (current_time - health_lst >= 1000) {
-        health_lst = current_time;
+	if (sensorData.accel.warning) {
+		drone_health -= 25;
+		if (drone_health < 0) {
+			drone_health = 0;
+		}
 
-        if (Internal_Check_Upside_Down()) {
-            drone_health -= 25;
-            if (drone_health < 0) {
-                drone_health = 0;
-            }
+		Print_Health_Bar(drone_health, false);
 
-            Print_Health_Bar(drone_health, false);
+		if (drone_health == 0) {
+			destroyed = true;
+			char term_msg[] = VT_BG_RED VT_WHITE VT_BOLD "[CRITICAL] Drone destroyed! Initiating failure sequence. " VT_RESET "\r\n";
+			HAL_UART_Transmit(&huart1, (uint8_t*)term_msg, strlen(term_msg), 0xFFFF);
+			return true;
+		}
+	} else {
+		if (drone_health > 0 && drone_health < 100) {
+			drone_health += 10;
+			if (drone_health > 100) {
+				drone_health = 100;
+			}
 
-            if (drone_health == 0) {
-                char term_msg[] = VT_BG_RED VT_WHITE VT_BOLD " [CRITICAL] Drone destroyed! Initiating failure sequence. " VT_RESET "\r\n";
-                HAL_UART_Transmit(&huart1, (uint8_t*)term_msg, strlen(term_msg), 0xFFFF);
-                return true;
-            }
-        } else {
-            if (drone_health > 0 && drone_health < 100) {
-                drone_health += 10;
-                if (drone_health > 100) {
-                    drone_health = 100;
-                }
+			Print_Health_Bar(drone_health, true);
+		}
+	}
 
-                Print_Health_Bar(drone_health, true);
-            }
-        }
-    }
-
-    return false;
 }
 
-static bool Internal_Check_Upside_Down(void)
-{
-    int16_t accel_raw[3] = {0};
-
-    BSP_ACCELERO_AccGetXYZ(accel_raw);
-
-    if (accel_raw[2] < -500) {
-        return true;
-    } else {
-        return false;
-    }
+bool MB_GetDestroyed(void) {
+	return destroyed;
 }
 
 static void Print_Health_Bar(int health, bool is_healing) {

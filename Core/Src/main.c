@@ -1,7 +1,7 @@
 /******************************************************************************
-- @file           : main.c
-- @brief          : Main program body
-- (c) EE2028 Teaching Team
+  * @file           : main.c
+  * @brief          : Main program body
+  * (c) EE2028 Teaching Team
   ******************************************************************************/
 
 
@@ -29,12 +29,13 @@ void handleModeSwitch(bool double_press_flag, SensorData sensor_data) {
 		case STANDBY_MODE:
 			if (double_press_flag) {
 				M_enterBattleMode();
-				MB_Init();
 			}
 			break;
 
 		case BATTLE_MODE:
-			if (double_press_flag) {
+			if (MB_GetDestroyed()) {
+				M_enterTheLast();
+			} else if (double_press_flag) {
 				M_enterStandbyMode();
 			}
 			break;
@@ -43,7 +44,6 @@ void handleModeSwitch(bool double_press_flag, SensorData sensor_data) {
 			if (MT_getTerminated()) {
 				M_enterTerminated();
 			} else if (double_press_flag) {
-				ML_resetCountdown();
 				M_enterBattleMode();
 			}
 			break;
@@ -55,7 +55,7 @@ void handleModeSwitch(bool double_press_flag, SensorData sensor_data) {
 	B_consumeDoublePressFlag();
 }
 
-void handleModeButtonActions(bool single_press_flag, uint32_t runtime) {
+void handleModeButtonActions(bool single_press_flag, uint32_t runtime, SensorData sensorData) {
 	if (single_press_flag) {
 		switch (M_getOperatingMode()) {
 			case STANDBY_MODE:
@@ -63,7 +63,7 @@ void handleModeButtonActions(bool single_press_flag, uint32_t runtime) {
 				break;
 
 			case BATTLE_MODE:
-				MB_OnSinglePress();
+				MB_OnSinglePress(sensorData);
 				break;
 		}
 
@@ -78,9 +78,7 @@ void handleModeRecurringActions(SensorData sensorData) {
 			break;
 
 		case BATTLE_MODE:
-			if (MB_Update() == true) {
-				M_enterTheLast();
-			}
+			MB_Update(sensorData);
 			break;
 
 		case THE_LAST:
@@ -133,7 +131,7 @@ int main(void)
 		}
 
 		if (clock_1Hz) handleModeSwitch(B_getDoublePressFlag(), sensorData);
-		if (clock_2Hz) handleModeButtonActions(B_getSinglePressFlag(), runtime);
+		if (clock_2Hz) handleModeButtonActions(B_getSinglePressFlag(), runtime, sensorData);
 		if (clock_1Hz) handleModeRecurringActions(sensorData);
 
 		if (clock_4Hz) updateLed(runtime);
