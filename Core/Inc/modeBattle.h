@@ -3,8 +3,7 @@
  *
 -  Created on:
 Nov 4, 2026
--      Author: Aryan
-Goswami
+-      Author: Aryan Goswami
  */
 
 #ifndef MODEBATTLE_H
