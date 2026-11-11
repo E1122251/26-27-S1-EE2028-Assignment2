@@ -1,9 +1,9 @@
 #include "modeLast.h"
+
 #include <stdbool.h>
+#include <stdio.h>
 
-#include <stm32l4xx_hal.h>
-
-extern UART_HandleTypeDef huart1;
+#include "transmit.h"
 
 static int countdown = 10;
 
@@ -12,11 +12,17 @@ void ML_transmitRescueRequest(void) {
 
 	if (countdown != 0) {
 		sprintf(message_transmit, "Drone Was Attacked! Beginning termination sequence in %i\r\n", countdown);
-		HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit),0xFFFF);
 	} else {
 		sprintf(message_transmit, "Drone Was Attacked! Beginning termination sequence\r\n");
-		HAL_UART_Transmit(&huart1, (uint8_t*)message_transmit, strlen(message_transmit),0xFFFF);
 	}
+
+	transmit(message_transmit);
+}
+
+void ML_transmitRescueAcknowledgement(void) {
+	char message_transmit[128];
+	sprintf(message_transmit, "Drone Was Rescued!\r\n", countdown);
+	transmit(message_transmit);
 }
 
 int ML_getCountdown(void) {

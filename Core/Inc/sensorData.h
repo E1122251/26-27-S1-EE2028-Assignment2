@@ -15,6 +15,7 @@ typedef struct {
 	IndividualSensorParameters accel;
 	IndividualSensorParameters gyro;
 	IndividualSensorParameters magneto;
+	bool noWarnings;
 } SensorData;
 
 #endif

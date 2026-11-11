@@ -1,5 +1,8 @@
 #include "sensors.h"
 
+#include <math.h>
+#include <stdio.h>
+
 #include "../../Drivers/BSP/B-L4S5I-IOT01/stm32l4s5i_iot01_tsensor.h"
 #include "../../Drivers/BSP/B-L4S5I-IOT01/stm32l4s5i_iot01_psensor.h"
 #include "../../Drivers/BSP/B-L4S5I-IOT01/stm32l4s5i_iot01_hsensor.h"
@@ -11,7 +14,7 @@ static SensorData sensorData = { 0 };
 
 static const float TEMP_UPPER_BOUND = 35.0;
 static const float PRESSURE_UPPER_BOUND = 1500.0;
-static const float HUMIDITY_UPPER_BOUND = 75.0;
+static const float HUMIDITY_UPPER_BOUND = 90.0;
 static const float ACCEL_LOWER_BOUND = -9.0;
 static const float GYRO_UPPER_BOUND = 30.0;
 static const float MAGNETO_UPPER_BOUND = 1.0;
@@ -103,5 +106,15 @@ void updateSensorData(void) {
 	// Magneto
 	sensorData.magneto.reading = readMagneto();
 	sensorData.magneto.warning = (sensorData.magneto.reading > MAGNETO_UPPER_BOUND);
+
+	// noWarnings
+	sensorData.noWarnings = !(
+		sensorData.temp.warning ||
+		sensorData.pressure.warning ||
+		sensorData.humidity.warning ||
+		sensorData.accel.warning ||
+		sensorData.gyro.warning ||
+		sensorData.magneto.warning
+	);
 
 }
