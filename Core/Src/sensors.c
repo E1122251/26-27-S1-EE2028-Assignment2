@@ -14,7 +14,7 @@ static SensorData sensorData = { 0 };
 
 static const float TEMP_UPPER_BOUND = 35.0;
 static const float PRESSURE_UPPER_BOUND = 1500.0;
-static const float HUMIDITY_UPPER_BOUND = 75.0;
+static const float HUMIDITY_UPPER_BOUND = 90.0;
 static const float ACCEL_LOWER_BOUND = -9.0;
 static const float GYRO_UPPER_BOUND = 30.0;
 static const float MAGNETO_UPPER_BOUND = 1.0;
