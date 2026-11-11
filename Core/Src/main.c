@@ -1,7 +1,7 @@
 /******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  * (c) EE2028 Teaching Team
+- @file           : main.c
+- @brief          : Main program body
+- (c) EE2028 Teaching Team
   ******************************************************************************/
 
 
@@ -23,6 +23,9 @@
 #include "modeLast.h"
 #include "modeTerminated.h"
 
+#include "buzzer.h"
+#include "modeOled.h"
+
 UART_HandleTypeDef huart1;
 
 // ========== Handle mode ==========
@@ -31,23 +34,30 @@ void handleModeSwitch(bool double_press_flag, SensorData sensor_data) {
 		case STANDBY_MODE:
 			if (double_press_flag) {
 				M_enterBattleMode();
+				BUZZ_Play(BUZZ_PATTERN_MODE_CHANGE);
 			}
 			break;
 
 		case BATTLE_MODE:
 			if (MB_GetDestroyed()) {
 				M_enterTheLast();
+				MOL_PowerOff();
+				BUZZ_Play(BUZZ_PATTERN_ALARM);
 			} else if (double_press_flag) {
 				M_enterStandbyMode();
+				MOL_PowerOff();
+				BUZZ_Play(BUZZ_PATTERN_MODE_CHANGE);
 			}
 			break;
 
 		case THE_LAST:
 			if (MT_getTerminated()) {
 				M_enterTerminated();
+				MOL_PowerOff();
 			} else if (double_press_flag) {
 				ML_transmitRescueAcknowledgement();
 				M_enterBattleMode();
+				BUZZ_Play(BUZZ_PATTERN_MODE_CHANGE);
 			}
 			break;
 
@@ -70,6 +80,7 @@ void handleModeButtonActions(bool single_press_flag, uint32_t runtime, SensorDat
 
 			case BATTLE_MODE:
 				MB_OnSinglePress(sensorData);
+				BUZZ_Play(BUZZ_PATTERN_SHORT_CHIRP);
 				break;
 
 			default:
@@ -94,6 +105,7 @@ void handleModeRecurringActions(SensorData sensorData) {
 			if (ML_getCountdown() == 0) MT_setTerminated();
 			ML_transmitRescueRequest();
 			ML_decrementCountdown();
+			BUZZ_Play(BUZZ_PATTERN_EVAC_PULSE);
 			break;
 
 		case TERMINATED:
@@ -111,6 +123,8 @@ int main(void)
 {
 
 	customInit();
+	BUZZ_Init();
+	MOL_Init();
 
 	uint32_t runtime = -1;
 	uint32_t prev_runtime = -1;
@@ -136,6 +150,7 @@ int main(void)
 
 		// Update button flags
 		B_update(runtime);
+		BUZZ_Update();
 
 		if (clock_1Hz) {
 			updateSensorData();
