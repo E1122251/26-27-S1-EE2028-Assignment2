@@ -1,7 +1,7 @@
 /******************************************************************************
-- @file           : main.c
-- @brief          : Main program body
-- (c) EE2028 Teaching Team
+  * @file           : main.c
+  * @brief          : Main program body
+  * (c) EE2028 Teaching Team
   ******************************************************************************/
 
 
@@ -109,7 +109,6 @@ void handleModeRecurringActions(SensorData sensorData) {
 			break;
 
 		case TERMINATED:
-			while (1) {}
 			break;
 
 		default:

@@ -22,14 +22,14 @@ static void M_enterOperatingMode(OperatingMode mode) {
 	switch (mode) {
 		case BATTLE_MODE:
 			setLedMode(LED_BLINK_1HZ);
-			message_transmit = "Entering BATTLE_MODE\r\n";
+			message_transmit = "Entering BATTLE MODE\r\n";
 			transmit(message_transmit);
 			MB_Init();
 			break;
 
 		case STANDBY_MODE:
 			setLedMode(LED_ALWAYS_ON);
-			message_transmit = "Entering STANDBY_MODE\r\n";
+			message_transmit = "Entering STANDBY MODE\r\n";
 			transmit(message_transmit);
 			break;
 
@@ -41,7 +41,7 @@ static void M_enterOperatingMode(OperatingMode mode) {
 
 		case THE_LAST:
 			setLedMode(LED_BLINK_2HZ);
-			message_transmit = "Entering THE_LAST\r\n";
+			message_transmit = "Entering THE LAST\r\n";
 			transmit(message_transmit);
 			ML_resetCountdown();
 			break;
